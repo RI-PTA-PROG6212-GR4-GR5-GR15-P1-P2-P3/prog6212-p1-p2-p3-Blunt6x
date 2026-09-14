@@ -1,1 +1,27 @@
+name: RaceDay Part 1 CI 
+on: 
+push: 
+branches: [ main ] 
+pull_request: 
+branches: [ main ] 
+jobs: 
+validate-planning: 
+runs-on: ubuntu-latest 
+steps: 
+- name: Checkout Repository uses: actions/checkout@v5 
+name: Check Docs Folder 
+run: | 
+test -d "docs" || (echo "ERROR: docs folder is missing" && exit 1) 
+name: Check Required Files 
+run: 
+test -f "docs/ERD.pdf" || exit 1 
+test -f "docs/API-Endpoints.pdf" || exit 1 
+test -f "docs/Role-Based-Design.pdf" || exit 1 
+test -f "docs/RaceDayDB.sql" || exit 1 
+test -f "README.md" || exit 1 
+name: Check SQL Contains Tables 
+run: | 
+grep -qi "CREATE TABLE" docs/RaceDayDB.sql || exit 1 
+name: Part 1 Validation Complete 
+run: echo "RaceDay Part 1 validation passed successfully." 
 
