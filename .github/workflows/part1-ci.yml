@@ -18,13 +18,13 @@ jobs:
         run: |
           echo "Files in repository:"
           find . -maxdepth 3 -type f | sort
-          
+
       - name: Check Docs Folder
         run: |
           test -d "docs" || (echo "ERROR: docs folder is missing" && exit 1)
 
-       - name: Check Required Files
-         run: |
+      - name: Check Required Files
+        run: |
           echo "Checking ERD..."
           test -f "docs/ERD.pdf" && echo "ERD.pdf FOUND" || (echo "ERD.pdf MISSING" && exit 1)
 
