@@ -14,6 +14,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
+      - name: Show Repository Files
+        run: |
+          echo "Files in repository:"
+          find . -maxdepth 3 -type f | sort
+          
       - name: Check Docs Folder
         run: |
           test -d "docs" || (echo "ERROR: docs folder is missing" && exit 1)
