@@ -23,13 +23,22 @@ jobs:
         run: |
           test -d "docs" || (echo "ERROR: docs folder is missing" && exit 1)
 
-      - name: Check Required Files
-        run: |
-          test -f "docs/ERD.pdf" || exit 1
-          test -f "docs/endpoint-plan.md" || exit 1
-          test -f "docs/Role-Based-Design.pdf" || exit 1
-          test -f "docs/RaceDayDB.sql" || exit 1
-          test -f "README.md" || exit 1
+       - name: Check Required Files
+         run: |
+          echo "Checking ERD..."
+          test -f "docs/ERD.pdf" && echo "ERD.pdf FOUND" || (echo "ERD.pdf MISSING" && exit 1)
+
+          echo "Checking API Endpoint Plan..."
+          test -f "docs/endpoint-plan.md" && echo "endpoint-plan.md FOUND" || (echo "endpoint-plan.md MISSING" && exit 1)
+
+          echo "Checking Role-Based Design..."
+          test -f "docs/Role_Based_Design.pdf" && echo "Role_Based_Design.pdf FOUND" || (echo "Role_Based_Design.pdf MISSING" && exit 1)
+
+          echo "Checking SQL..."
+          test -f "docs/RaceDayDB.sql" && echo "RaceDayDB.sql FOUND" || (echo "RaceDayDB.sql MISSING" && exit 1)
+
+          echo "Checking README..."
+          test -f "README.md" && echo "README.md FOUND" || (echo "README.md MISSING" && exit 1)
 
       - name: Check SQL Contains Tables
         run: |
