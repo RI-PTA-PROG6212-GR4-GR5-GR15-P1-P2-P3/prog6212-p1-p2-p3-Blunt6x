@@ -1,4 +1,5 @@
-name: RaceDay Part 1 CI
+
+name: RaceDay Part 2 CI
 
 on:
   push:
@@ -7,42 +8,70 @@ on:
     branches: [ main ]
 
 jobs:
-  validate-planning:
+  validate-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
+      - name: Set Up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Show Repository Files
         run: |
           echo "Files in repository:"
-          find . -maxdepth 3 -type f | sort
+          find . -maxdepth 5 -type f | sort
 
       - name: Check Docs Folder
         run: |
           test -d "docs" || (echo "ERROR: docs folder is missing" && exit 1)
 
-      - name: Check Required Files
+      - name: Check Required Part 1 Files
         run: |
           echo "Checking ERD..."
-          test -f "docs/ERD.pdf" && echo "ERD.pdf FOUND" || (echo "ERD.pdf MISSING" && exit 1)
+          test -f "docs/ERD.pdf" || (echo "ERROR: ERD.pdf missing" && exit 1)
 
           echo "Checking API Endpoint Plan..."
-          test -f "docs/endpoint-plan.md" && echo "endpoint-plan.md FOUND" || (echo "endpoint-plan.md MISSING" && exit 1)
+          test -f "docs/endpoint-plan.md" || (echo "ERROR: endpoint-plan.md missing" && exit 1)
 
           echo "Checking Role-Based Design..."
-          test -f "docs/Role_Based_Design.pdf" && echo "Role_Based_Design.pdf FOUND" || (echo "Role_Based_Design.pdf MISSING" && exit 1)
+          test -f "docs/Role_Based_Design.pdf" || (echo "ERROR: Role_Based_Design.pdf missing" && exit 1)
 
           echo "Checking SQL..."
-          test -f "docs/RaceDayDB.sql" && echo "RaceDayDB.sql FOUND" || (echo "RaceDayDB.sql MISSING" && exit 1)
+          test -f "docs/RaceDayDB.sql" || (echo "ERROR: RaceDayDB.sql missing" && exit 1)
 
           echo "Checking README..."
-          test -f "README.md" && echo "README.md FOUND" || (echo "README.md MISSING" && exit 1)
+          test -f "README.md" || (echo "ERROR: README.md missing" && exit 1)
 
-      - name: Check SQL Contains Tables
+      - name: Check SQL Contains Table Definitions
         run: |
-          grep -qi "CREATE TABLE" docs/RaceDayDB.sql || exit 1
+          grep -qi "CREATE TABLE" docs/RaceDayDB.sql || (echo "ERROR: No CREATE TABLE statements found" && exit 1)
 
-      - name: Part 1 Validation Complete
-        run: echo "RaceDay Part 1 validation passed successfully."
+      - name: Locate Solution File
+        shell: bash
+        run: |
+          solution=$(find . -maxdepth 5 -type f \( -name '*.sln' -o -name '*.slnx' \) -print -quit)
+
+          if [ -z "$solution" ]; then
+            echo "ERROR: No .NET solution file (.sln or .slnx) found."
+            echo "Check that your solution file is committed to GitHub."
+            exit 1
+          fi
+
+          echo "Found solution: $solution"
+          echo "SOLUTION_FILE=$solution" >> "$GITHUB_ENV"
+
+      - name: Restore Dependencies
+        run: dotnet restore "$SOLUTION_FILE"
+
+      - name: Build Solution
+        run: dotnet build "$SOLUTION_FILE" --configuration Release --no-restore
+
+      - name: Run Automated Tests
+        run: dotnet test "$SOLUTION_FILE" --configuration Release --no-build --logger "console;verbosity=normal"
+
+      - name: Part 2 CI Complete
+        run: echo "RaceDay documentation checks, build, and automated tests passed."
