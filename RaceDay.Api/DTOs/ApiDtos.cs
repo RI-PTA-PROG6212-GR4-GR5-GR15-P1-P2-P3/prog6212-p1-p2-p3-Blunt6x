@@ -1,0 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+namespace RaceDay.Api.DTOs;
+public record RegisterRequest([Required, MaxLength(80)] string FirstName, [Required, MaxLength(80)] string LastName, [Required, EmailAddress] string Email, [Required, MinLength(8)] string Password, [Required] string Role);
+public record LoginRequest([Required, EmailAddress] string Email, [Required] string Password);
+public record UpdateProfileRequest([Required, MaxLength(80)] string FirstName, [Required, MaxLength(80)] string LastName, [Required, EmailAddress] string Email);
+public record EventRequest([Required, MaxLength(120)] string Name, string Description, DateTime Date, [Required, MaxLength(180)] string Location, decimal Distance, string EventType);
+public record CategoryRequest([Required, MaxLength(80)] string Name, string? Description, int? MinimumAge, int? MaximumAge);
+public record CreateEnrolmentRequest(int EventId, int CategoryId);
+public record CreateResultRequest(int EnrolmentId, TimeSpan FinishTime, int Position);
+public record UpdateResultRequest(TimeSpan FinishTime, int Position);
