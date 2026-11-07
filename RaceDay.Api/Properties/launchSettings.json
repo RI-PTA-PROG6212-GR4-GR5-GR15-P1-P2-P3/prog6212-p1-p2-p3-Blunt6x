@@ -1,6 +1,14 @@
 {
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
+    "RaceDay.Api (http, Docker-friendly)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://*:5243",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development", "DisableHttpsRedirection": "true" }
+    },
     "RaceDay.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,

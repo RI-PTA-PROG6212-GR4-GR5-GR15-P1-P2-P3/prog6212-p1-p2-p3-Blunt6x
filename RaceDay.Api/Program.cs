@@ -20,6 +20,7 @@ var connection = builder.Configuration.GetConnectionString("DefaultConnection") 
 builder.Services.AddDbContext<RaceDayDbContext>(o => o.UseSqlServer(connection));
 builder.Services.AddScoped<IPasswordHasher<UserAccount>, PasswordHasher<UserAccount>>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "DEV_ONLY_CHANGE_THIS_KEY_TO_A_LONG_RANDOM_SECRET_2026";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o => {
     o.TokenValidationParameters = new TokenValidationParameters { ValidateIssuer = true, ValidateAudience = true, ValidateLifetime = true, ValidateIssuerSigningKey = true, ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "RaceDayApi", ValidAudience = builder.Configuration["Jwt:Audience"] ?? "RaceDayClients", IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), ClockSkew = TimeSpan.FromSeconds(30) };
@@ -27,7 +28,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddAuthorization();
 var app = builder.Build();
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
-app.UseHttpsRedirection();
+// Containers talk to the API over plain HTTP, so redirection can be switched off with DisableHttpsRedirection=true.
+if (!app.Configuration.GetValue<bool>("DisableHttpsRedirection")) app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
