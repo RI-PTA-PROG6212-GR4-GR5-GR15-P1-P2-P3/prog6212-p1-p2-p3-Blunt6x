@@ -1,0 +1,71 @@
+@model EnrolmentsPageViewModel
+@{
+    ViewData["Title"] = "Enrolments";
+    ViewData["Controller"] = "ManageEnrolments";
+    var shown = string.IsNullOrWhiteSpace(Model.StatusFilter) ? Model.Enrolments : Model.Enrolments.Where(e => e.Status.Equals(Model.StatusFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+}
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>Enrolments</h1><p class="sub">Who's signed up, in which category, and their status.</p></div>
+        @if (Model.MyEvents.Count > 0 && Model.Selected is not null) { <partial name="_EventSwitcher" model="Model" view-data="ViewData" /> }
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    @if (Model.Selected is null)
+    {
+        ViewData["Prompt"] = "Choose an event to see its enrolments";
+        <partial name="_EventPicker" model="Model" view-data="ViewData" />
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+            <a class="status-badge status-other text-decoration-none @(string.IsNullOrWhiteSpace(Model.StatusFilter) ? "fw-bolder" : "")" asp-action="Index" asp-route-eventId="@Model.Selected.EventId">All · @Model.Enrolments.Count</a>
+            <a class="status-badge status-confirmed text-decoration-none" asp-action="Index" asp-route-eventId="@Model.Selected.EventId" asp-route-status="Confirmed"><span class="dot"></span>Confirmed · @Model.Enrolments.Count(e => e.Status == "Confirmed")</a>
+            <a class="status-badge status-pending text-decoration-none" asp-action="Index" asp-route-eventId="@Model.Selected.EventId" asp-route-status="Pending"><span class="dot"></span>Pending · @Model.Enrolments.Count(e => e.Status == "Pending")</a>
+            <a class="status-badge status-cancelled text-decoration-none" asp-action="Index" asp-route-eventId="@Model.Selected.EventId" asp-route-status="Cancelled"><span class="dot"></span>Cancelled · @Model.Enrolments.Count(e => e.Status == "Cancelled")</a>
+        </div>
+        <div class="rd-card">
+            <div class="card-title-row"><h2>@Model.Selected.Name</h2><span class="text-muted small">@UiFormat.ShortDate(Model.Selected.Date) · @Model.Selected.Location</span></div>
+            @if (!shown.Any())
+            {
+                <div class="empty-state"><div class="icon">👥</div><p class="mb-0">@(Model.Enrolments.Any() ? "No enrolments with that status." : "Nobody has enrolled yet.")</p></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table rd-table">
+                        <thead><tr><th>Participant</th><th>Email</th><th>Category</th><th>Enrolled on</th><th>Status</th><th class="text-end">Change status</th></tr></thead>
+                        <tbody>
+                            @foreach (var e in shown)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@e.Participant.FullName</td>
+                                    <td class="text-muted">@e.Participant.Email</td>
+                                    <td>@e.Category.Name</td>
+                                    <td>@UiFormat.ShortDate(e.EnrolmentDate)</td>
+                                    <td><partial name="_StatusBadge" model="e.Status" /></td>
+                                    <td class="text-end">
+                                        <form asp-action="UpdateStatus" method="post" class="d-inline-flex gap-2 justify-content-end">
+                                            <input type="hidden" name="enrolmentId" value="@e.EnrolmentId" />
+                                            <input type="hidden" name="eventId" value="@Model.Selected.EventId" />
+                                            <select name="status" class="form-select form-select-sm" style="width: 9rem;" aria-label="New status for @e.Participant.FullName">
+                                                @foreach (var s in new[] { "Confirmed", "Pending", "Cancelled" })
+                                                {
+                                                    <option value="@s" selected="@(e.Status == s)">@s</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>

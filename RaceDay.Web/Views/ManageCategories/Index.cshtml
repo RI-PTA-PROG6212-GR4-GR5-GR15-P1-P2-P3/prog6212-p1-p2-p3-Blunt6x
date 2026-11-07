@@ -1,0 +1,93 @@
+@model CategoriesPageViewModel
+@{ ViewData["Title"] = "Categories"; ViewData["Controller"] = "ManageCategories"; }
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>Categories</h1><p class="sub">Age or distance groups participants choose from when enrolling.</p></div>
+        @if (Model.MyEvents.Count > 0 && Model.Selected is not null) { <partial name="_EventSwitcher" model="Model" view-data="ViewData" /> }
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    @if (Model.Selected is null)
+    {
+        ViewData["Prompt"] = "Choose an event to manage its categories";
+        <partial name="_EventPicker" model="Model" view-data="ViewData" />
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="rd-card">
+                    <div class="card-title-row"><h2>@Model.Selected.Name</h2><span class="text-muted small">@Model.Categories.Count categories</span></div>
+                    @if (!Model.Categories.Any())
+                    {
+                        <div class="empty-state"><div class="icon">🗂️</div><p class="mb-0">No categories yet. Add the first one →</p></div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table rd-table">
+                                <thead><tr><th>Name</th><th>Age group</th><th>Description</th><th></th></tr></thead>
+                                <tbody>
+                                    @foreach (var c in Model.Categories)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@c.Name</td>
+                                            <td>@UiFormat.AgeRange(c.MinimumAge, c.MaximumAge)</td>
+                                            <td class="text-muted">@(string.IsNullOrWhiteSpace(c.Description) ? "—" : c.Description)</td>
+                                            <td class="text-end">
+                                                <form asp-action="Delete" method="post" class="d-inline" data-confirm="Remove the “@c.Name” category?">
+                                                    <input type="hidden" name="categoryId" value="@c.CategoryId" />
+                                                    <input type="hidden" name="eventId" value="@Model.Selected.EventId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="rd-card">
+                    <div class="card-title-row"><h2>Add a category</h2></div>
+                    <div class="card-pad">
+                        <form asp-action="Create" method="post" novalidate>
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                            <input type="hidden" asp-for="Form.EventId" value="@Model.Selected.EventId" />
+                            <div class="mb-3">
+                                <label asp-for="Form.Name" class="form-label">Name</label>
+                                <input asp-for="Form.Name" class="form-control" placeholder="e.g. Under 18, 10 km, Masters 40+" maxlength="80" />
+                                <span asp-validation-for="Form.Name" class="text-danger"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Form.Description" class="form-label">Description <span class="text-muted fw-normal">(optional)</span></label>
+                                <input asp-for="Form.Description" class="form-control" maxlength="250" />
+                                <span asp-validation-for="Form.Description" class="text-danger"></span>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label asp-for="Form.MinimumAge" class="form-label"></label>
+                                    <input asp-for="Form.MinimumAge" type="number" min="0" max="120" class="form-control" />
+                                    <span asp-validation-for="Form.MinimumAge" class="text-danger"></span>
+                                </div>
+                                <div class="col-6">
+                                    <label asp-for="Form.MaximumAge" class="form-label"></label>
+                                    <input asp-for="Form.MaximumAge" type="number" min="0" max="120" class="form-control" />
+                                    <span asp-validation-for="Form.MaximumAge" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="form-text mb-3">Leave the ages empty for a distance-based or open category.</div>
+                            <button type="submit" class="btn btn-primary w-100" data-busy="Adding…">Add category</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

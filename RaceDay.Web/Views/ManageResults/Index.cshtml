@@ -1,0 +1,65 @@
+@model ResultsPageViewModel
+@{ ViewData["Title"] = "Results"; ViewData["Controller"] = "ManageResults"; }
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>Results</h1><p class="sub">Capture finish times and positions. Saved results are published to participants immediately.</p></div>
+        @if (Model.MyEvents.Count > 0 && Model.Selected is not null) { <partial name="_EventSwitcher" model="Model" view-data="ViewData" /> }
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    @if (Model.Selected is null)
+    {
+        ViewData["Prompt"] = "Choose an event to enter results";
+        <partial name="_EventPicker" model="Model" view-data="ViewData" />
+    }
+    else
+    {
+        @if (!Model.EventConcluded)
+        {
+            <div class="alert alert-warning rd-alert" role="alert">This event takes place on <strong>@UiFormat.LongDate(Model.Selected.Date)</strong>. Results can be captured once it has concluded.</div>
+        }
+        <div class="rd-card">
+            <div class="card-title-row"><h2>@Model.Selected.Name</h2><span class="text-muted small">@Model.Rows.Count(r => r.ResultId.HasValue) of @Model.Rows.Count results entered</span></div>
+            @if (!Model.Rows.Any())
+            {
+                <div class="empty-state"><div class="icon">👥</div><p class="mb-0">No enrolled participants to record results for.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table rd-table">
+                        <thead><tr><th>Participant</th><th>Category</th><th>Status</th><th>Finish time <span class="text-lowercase fw-normal">(h:mm:ss)</span></th><th>Position</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var r in Model.Rows)
+                            {
+                                var formId = $"result-{r.EnrolmentId}";
+                                <tr>
+                                    <td class="fw-semibold">@r.ParticipantName</td>
+                                    <td>@r.CategoryName</td>
+                                    <td><partial name="_StatusBadge" model="r.Status" /></td>
+                                    <td style="width: 11rem;">
+                                        <input form="@formId" name="FinishTime" value="@r.FinishTime" class="form-control form-control-sm" placeholder="0:45:12" pattern="\d{1,3}:[0-5]?\d(:[0-5]\d)?" inputmode="numeric" required disabled="@(!Model.EventConcluded)" aria-label="Finish time for @r.ParticipantName" />
+                                    </td>
+                                    <td style="width: 8rem;">
+                                        <input form="@formId" name="Position" value="@r.Position" type="number" min="1" class="form-control form-control-sm" placeholder="1" required disabled="@(!Model.EventConcluded)" aria-label="Position for @r.ParticipantName" />
+                                    </td>
+                                    <td class="text-end">
+                                        <form id="@formId" asp-action="Save" method="post">
+                                            <input type="hidden" name="EventId" value="@Model.Selected.EventId" />
+                                            <input type="hidden" name="EnrolmentId" value="@r.EnrolmentId" />
+                                            <input type="hidden" name="ResultId" value="@r.ResultId" />
+                                            <button type="submit" class="btn btn-sm @(r.ResultId.HasValue ? "btn-outline-primary" : "btn-primary")" disabled="@(!Model.EventConcluded)">@(r.ResultId.HasValue ? "Update" : "Publish")</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
