@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = ViewData["ErrorTitle"] as string ?? "Something went wrong";
+    var title = ViewData["ErrorTitle"] as string ?? "Something went wrong";
+    var message = ViewData["ErrorMessage"] as string ?? "We hit an unexpected problem. Please try again, and if it keeps happening let us know.";
+    var code = ViewData["ErrorCode"] as string;
+}
+<div class="container py-5">
+    <div class="error-panel mx-auto text-center">
+        @if (code is not null) { <div class="error-code">@code</div> }
+        <h1 class="h2">@title</h1>
+        <p class="lead text-muted">@message</p>
+        <div class="d-flex gap-2 justify-content-center">
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to events</a>
+            <a class="btn btn-outline-secondary" href="javascript:history.back()">Go back</a>
+        </div>
+        @if (ViewData["RequestId"] is string id) { <p class="small text-muted mt-4 mb-0">Reference: @id</p> }
+    </div>
+</div>

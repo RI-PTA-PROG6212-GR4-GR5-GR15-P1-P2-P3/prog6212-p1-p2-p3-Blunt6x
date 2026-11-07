@@ -1,0 +1,15 @@
+@* Lets an organiser pick which of their events a page works on. ViewData["Controller"] = target controller. *@
+@model EventScopedViewModel
+@{ var target = ViewData["Controller"]?.ToString() ?? "ManageEvents"; }
+<form method="get" asp-controller="@target" asp-action="Index" class="event-switcher">
+    <label for="eventId" class="form-label mb-1">Event</label>
+    <div class="input-group">
+        <select id="eventId" name="eventId" class="form-select" onchange="this.form.submit()">
+            @foreach (var e in Model.MyEvents)
+            {
+                <option value="@e.EventId" selected="@(Model.Selected?.EventId == e.EventId)">@e.Name — @UiFormat.ShortDate(e.Date)</option>
+            }
+        </select>
+        <noscript><button class="btn btn-primary" type="submit">Go</button></noscript>
+    </div>
+</form>

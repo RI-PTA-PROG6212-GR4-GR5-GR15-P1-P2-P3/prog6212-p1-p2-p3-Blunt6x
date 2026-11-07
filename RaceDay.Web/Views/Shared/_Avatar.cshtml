@@ -1,0 +1,9 @@
+@model UserSession
+@if (!string.IsNullOrWhiteSpace(Model.ProfilePictureUrl))
+{
+    <img class="avatar" src="@Model.ProfilePictureUrl" alt="" width="32" height="32" />
+}
+else
+{
+    <span class="avatar avatar-initials" aria-hidden="true">@Model.Initials</span>
+}

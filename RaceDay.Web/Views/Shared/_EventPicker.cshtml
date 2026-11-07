@@ -1,0 +1,23 @@
+@* Shown on organiser pages when no event has been chosen yet. ViewData["Controller"], ViewData["Prompt"] *@
+@model EventScopedViewModel
+@{ var target = ViewData["Controller"]?.ToString() ?? "ManageEvents"; }
+<div class="rd-card p-4">
+    <h2 class="h5 mb-1">@(ViewData["Prompt"] ?? "Choose an event")</h2>
+    @if (!Model.MyEvents.Any())
+    {
+        <p class="text-muted mb-3">You haven't created any events yet.</p>
+        <a class="btn btn-primary" asp-controller="ManageEvents" asp-action="Create">Create your first event</a>
+    }
+    else
+    {
+        <div class="list-group list-group-flush mt-3">
+            @foreach (var e in Model.MyEvents.OrderByDescending(x => x.Date))
+            {
+                <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" asp-controller="@target" asp-action="Index" asp-route-eventId="@e.EventId">
+                    <span><strong>@e.Name</strong><br /><small class="text-muted">@UiFormat.ShortDate(e.Date) · @e.Location</small></span>
+                    <span class="badge rounded-pill text-bg-light">@e.EnrolmentCount enrolled</span>
+                </a>
+            }
+        </div>
+    }
+</div>

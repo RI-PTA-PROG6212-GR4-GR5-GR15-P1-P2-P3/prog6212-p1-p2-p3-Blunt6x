@@ -1,0 +1,10 @@
+@* Event banner image from Azure Blob Storage, with an on-brand fallback when none was uploaded. Model: EventDto *@
+@model EventDto
+@if (!string.IsNullOrWhiteSpace(Model.BannerUrl))
+{
+    <img class="banner-img" src="@Model.BannerUrl" alt="Banner for @Model.Name" loading="lazy" />
+}
+else
+{
+    <div class="banner-fallback" role="img" aria-label="@Model.EventType event"><span>@UiFormat.EventTypeIcon(Model.EventType)</span></div>
+}
