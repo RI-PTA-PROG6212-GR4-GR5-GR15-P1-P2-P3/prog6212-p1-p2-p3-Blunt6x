@@ -22,6 +22,8 @@
             if (file.size > 5 * 1024 * 1024) { alert('Please choose an image of 5 MB or less.'); input.value = ''; return; }
             target.src = URL.createObjectURL(file);
             target.classList.remove('d-none');
+            var hide = input.getAttribute('data-preview-hide');
+            if (hide) { var h = document.querySelector(hide); if (h) h.classList.add('d-none'); }
         });
     });
 })();

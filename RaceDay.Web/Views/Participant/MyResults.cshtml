@@ -1,0 +1,47 @@
+@model List<MyResultDto>
+@{ ViewData["Title"] = "My results"; }
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>My results</h1><p class="sub">Your race history across completed events.</p></div>
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="rd-card empty-state"><div class="icon">⏱️</div><h2 class="h4 mt-2">No results yet</h2><p>Results appear here once an organiser publishes them after your event.</p><a class="btn btn-outline-primary" asp-controller="Participant" asp-action="MyEnrolments">View my enrolments</a></div>
+    }
+    else
+    {
+        var best = Model.OrderBy(r => r.Position).First();
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3"><div class="stat-card"><div class="num">@Model.Count</div><div class="lbl">Races completed</div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card alt"><div class="num">@UiFormat.Ordinal(best.Position)</div><div class="lbl">Best position</div></div></div>
+            <div class="col-12 col-md-6"><div class="stat-card"><div class="num">@UiFormat.Duration(Model.Min(r => r.FinishTime))</div><div class="lbl">Fastest finish time</div></div></div>
+        </div>
+        <div class="rd-card">
+            <div class="table-responsive">
+                <table class="table rd-table">
+                    <thead><tr><th>Event</th><th>Date</th><th>Category</th><th>Finish time</th><th>Position</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td><a asp-controller="Events" asp-action="Details" asp-route-id="@r.Event.EventId" class="fw-semibold">@r.Event.Name</a><br /><small class="text-muted">@r.Event.Location · @UiFormat.Distance(r.Event.Distance)</small></td>
+                                <td>@UiFormat.ShortDate(r.Event.Date)</td>
+                                <td>@r.Category.Name</td>
+                                <td><span class="finish-time">@UiFormat.Duration(r.FinishTime)</span></td>
+                                <td>
+                                    <span class="position-badge"><span class="big">@UiFormat.Ordinal(r.Position)</span>@if (r.TotalFinishers >= r.Position) { <span class="of">of @r.TotalFinishers</span> }</span>
+                                    <div class="small text-muted mt-1">@UiFormat.PositionOf(r.Position, r.TotalFinishers)</div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

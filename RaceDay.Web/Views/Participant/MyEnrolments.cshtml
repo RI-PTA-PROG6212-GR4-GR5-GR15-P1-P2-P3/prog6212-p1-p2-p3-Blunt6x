@@ -1,0 +1,50 @@
+@model List<MyEnrolmentDto>
+@{ ViewData["Title"] = "My enrolments"; }
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>My enrolments</h1><p class="sub">Every event you've signed up for and where it stands.</p></div>
+        <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Find more events</a>
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="rd-card empty-state"><div class="icon">📋</div><h2 class="h4 mt-2">No enrolments yet</h2><p>Browse upcoming events and pick your first race.</p><a class="btn btn-primary" asp-controller="Home" asp-action="Index">Browse events</a></div>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="status-badge status-confirmed"><span class="dot"></span>Confirmed · @Model.Count(e => e.Status == "Confirmed")</span>
+            <span class="status-badge status-pending"><span class="dot"></span>Pending · @Model.Count(e => e.Status == "Pending")</span>
+            <span class="status-badge status-cancelled"><span class="dot"></span>Cancelled · @Model.Count(e => e.Status == "Cancelled")</span>
+        </div>
+        <div class="rd-card">
+            <div class="table-responsive">
+                <table class="table rd-table">
+                    <thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Category</th><th>Enrolled on</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @foreach (var e in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a class="d-flex align-items-center gap-3 text-decoration-none" asp-controller="Events" asp-action="Details" asp-route-id="@e.Event.EventId">
+                                        <span class="thumb"><partial name="_Banner" model="@(new EventDto { Name = e.Event.Name, EventType = e.Event.EventType, BannerUrl = e.Event.BannerUrl })" /></span>
+                                        <span><strong class="text-body">@e.Event.Name</strong><br /><small class="text-muted">@UiFormat.EventTypeIcon(e.Event.EventType) @e.Event.EventType · @UiFormat.Distance(e.Event.Distance)</small></span>
+                                    </a>
+                                </td>
+                                <td>@UiFormat.ShortDate(e.Event.Date)<br /><small class="text-muted">@UiFormat.Countdown(e.Event.Date)</small></td>
+                                <td>@e.Event.Location</td>
+                                <td>@e.Category.Name</td>
+                                <td>@UiFormat.ShortDate(e.EnrolmentDate)</td>
+                                <td><partial name="_StatusBadge" model="e.Status" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
