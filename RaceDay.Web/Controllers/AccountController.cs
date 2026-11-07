@@ -6,9 +6,6 @@ using RaceDay.Web.Models.ViewModels;
 namespace RaceDay.Web.Controllers;
 
 public class AccountController(IRaceDayApiClient api) : Controller {
-    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-    private const long MaxImageBytes = 5 * 1024 * 1024;
-
     private IActionResult RedirectHome(UserSession user) => user.IsOrganiser ? RedirectToAction("Dashboard", "Organiser") : RedirectToAction("Index", "Home");
 
     [HttpGet]
@@ -108,8 +105,8 @@ public class AccountController(IRaceDayApiClient api) : Controller {
     [HttpPost, SessionAuthorize]
     public async Task<IActionResult> UploadPicture(IFormFile? picture) {
         if (picture is null || picture.Length == 0) { TempData["Error"] = "Choose an image to upload."; return RedirectToAction(nameof(Profile)); }
-        if (picture.Length > MaxImageBytes || !ImageExtensions.Contains(Path.GetExtension(picture.FileName), StringComparer.OrdinalIgnoreCase)) {
-            TempData["Error"] = "Upload a JPG, PNG, GIF or WebP image of 5 MB or less.";
+        if (!ImageUpload.IsValid(picture)) {
+            TempData["Error"] = ImageUpload.ErrorMessage;
             return RedirectToAction(nameof(Profile));
         }
 

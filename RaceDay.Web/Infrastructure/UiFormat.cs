@@ -16,6 +16,19 @@ public static class UiFormat {
         : Ordinal(position);
 
     public static string Duration(TimeSpan t) => $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}";
+    /// <summary>Parses "h:mm:ss" or "m:ss" (as typed by an organiser). Returns false for anything else.</summary>
+    public static bool TryParseDuration(string? input, out TimeSpan value) {
+        value = default;
+        var parts = (input ?? "").Trim().Split(':');
+        if (parts.Length is < 2 or > 3) return false;
+        if (!parts.All(p => p.Length is >= 1 and <= 3 && p.All(char.IsDigit))) return false;
+        var nums = parts.Select(int.Parse).ToArray();
+        var (h, m, sec) = nums.Length == 3 ? (nums[0], nums[1], nums[2]) : (0, nums[0], nums[1]);
+        if (m > 59 || sec > 59) return false;
+        value = new TimeSpan(h, m, sec);
+        return value > TimeSpan.Zero;
+    }
+
     public static string Distance(decimal km) => $"{km.ToString("0.##", CultureInfo.InvariantCulture)} km";
     public static string LongDate(DateTime d) => d.ToString("ddd, d MMMM yyyy", Culture);
     public static string ShortDate(DateTime d) => d.ToString("d MMM yyyy", Culture);
