@@ -8,3 +8,4 @@ public record CategoryRequest([Required, MaxLength(80)] string Name, string? Des
 public record CreateEnrolmentRequest(int EventId, int CategoryId);
 public record CreateResultRequest(int EnrolmentId, TimeSpan FinishTime, int Position);
 public record UpdateResultRequest(TimeSpan FinishTime, int Position);
+public record UpdateEnrolmentStatusRequest([Required] string Status);
