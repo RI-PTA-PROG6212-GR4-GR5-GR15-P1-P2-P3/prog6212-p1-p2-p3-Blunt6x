@@ -25,6 +25,6 @@ public class AuthController(RaceDayDbContext db, IPasswordHasher<UserAccount> ha
     public async Task<IActionResult> Login(LoginRequest request) {
         var user = await db.Users.SingleOrDefaultAsync(x => x.Email == request.Email.Trim().ToLowerInvariant());
         if (user is null || hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed) return Unauthorized(new { message = "Invalid email or password." });
-        return Ok(new { token = jwt.CreateToken(user), userId = user.UserId, user.FirstName, user.LastName, user.Email, user.Role, tokenType = "Bearer" });
+        return Ok(new { token = jwt.CreateToken(user), userId = user.UserId, user.FirstName, user.LastName, user.Email, user.Role, user.ProfilePictureUrl, tokenType = "Bearer" });
     }
 }
