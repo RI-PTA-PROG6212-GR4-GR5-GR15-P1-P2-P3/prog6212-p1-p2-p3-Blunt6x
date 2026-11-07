@@ -1,0 +1,63 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "My profile";
+    var initials = $"{(Model.FirstName.Length > 0 ? Model.FirstName[0] : '?')}{(Model.LastName.Length > 0 ? Model.LastName[0] : ' ')}".Trim().ToUpperInvariant();
+}
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>My profile</h1><p class="sub">Keep your details up to date.</p></div>
+        <span class="status-badge status-other">@Model.Role</span>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="rd-card card-pad text-center">
+                <div class="mb-3">
+                    @if (!string.IsNullOrWhiteSpace(Model.ProfilePictureUrl))
+                    {
+                        <img id="profilePreview" class="profile-photo" src="@Model.ProfilePictureUrl" alt="Your profile picture" />
+                    }
+                    else
+                    {
+                        <span class="profile-photo" aria-hidden="true">@initials</span>
+                        <img id="profilePreview" class="profile-photo d-none" alt="Preview of your new picture" />
+                    }
+                </div>
+                <h2 class="h4 mb-3">Profile picture</h2>
+                <form asp-action="UploadPicture" method="post" enctype="multipart/form-data">
+                    <input type="file" name="picture" id="picture" class="form-control mb-1" accept="image/png,image/jpeg,image/gif,image/webp" data-preview="#profilePreview" required />
+                    <div class="form-text mb-3">JPG, PNG, GIF or WebP · up to 5 MB</div>
+                    <button type="submit" class="btn btn-primary w-100" data-busy="Uploading…">Upload picture</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="rd-card">
+                <div class="card-title-row"><h2>Personal information</h2></div>
+                <div class="card-pad">
+                    <form asp-action="Profile" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label"></label>
+                                <input asp-for="LastName" class="form-control" autocomplete="family-name" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" class="form-control" autocomplete="email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="mt-4"><button type="submit" class="btn btn-primary px-4" data-busy="Saving…">Save changes</button></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
