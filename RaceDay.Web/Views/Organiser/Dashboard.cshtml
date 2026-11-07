@@ -1,0 +1,75 @@
+@model DashboardViewModel
+@{ ViewData["Title"] = "Dashboard"; }
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>Organiser dashboard</h1><p class="sub">Hi @Model.OrganiserName — here's how your events are shaping up.</p></div>
+        <a class="btn btn-primary btn-lg" asp-controller="ManageEvents" asp-action="Create">+ New event</a>
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    else
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3"><div class="stat-card"><div class="num">@Model.TotalEvents</div><div class="lbl">Events created</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat-card alt"><div class="num">@Model.UpcomingEvents</div><div class="lbl">Upcoming events</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat-card"><div class="num">@Model.TotalEnrolments</div><div class="lbl">Total enrolments</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat-card alt"><div class="num">@Model.ResultsPublished</div><div class="lbl">Results published</div></div></div>
+        </div>
+
+        @if (Model.NextEvent is { } next)
+        {
+            <div class="rd-card card-pad mb-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="thumb" style="width: 96px; height: 60px;"><partial name="_Banner" model="next" /></span>
+                    <div>
+                        <div class="event-date">Next event · @UiFormat.Countdown(next.Date)</div>
+                        <h2 class="h3 mb-0">@next.Name</h2>
+                        <div class="text-muted">@UiFormat.LongDate(next.Date) · @next.Location · @next.EnrolmentCount enrolled</div>
+                    </div>
+                </div>
+                <a class="btn btn-outline-primary" asp-controller="ManageEnrolments" asp-action="Index" asp-route-eventId="@next.EventId">View enrolments</a>
+            </div>
+        }
+
+        <div class="rd-card">
+            <div class="card-title-row"><h2>Your events</h2><a asp-controller="ManageEvents" asp-action="Index" class="small fw-semibold">Manage all</a></div>
+            @if (!Model.Events.Any())
+            {
+                <div class="empty-state"><div class="icon">🏁</div><h2 class="h4 mt-2">No events yet</h2><p>Create your first event to start taking enrolments.</p><a class="btn btn-primary" asp-controller="ManageEvents" asp-action="Create">Create event</a></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table rd-table">
+                        <thead><tr><th>Event</th><th>Date</th><th>Status</th><th class="text-center">Enrolments</th><th class="text-center">Categories</th><th class="text-center">Results</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var e in Model.Events.OrderBy(x => x.IsUpcoming ? 0 : 1).ThenBy(x => x.IsUpcoming ? x.Date : DateTime.MaxValue).ThenByDescending(x => x.Date))
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="thumb"><partial name="_Banner" model="e" /></span>
+                                            <span><strong>@e.Name</strong><br /><small class="text-muted">@e.Location · @UiFormat.Distance(e.Distance) · @e.EventType</small></span>
+                                        </div>
+                                    </td>
+                                    <td>@UiFormat.ShortDate(e.Date)<br /><small class="text-muted">@UiFormat.Countdown(e.Date)</small></td>
+                                    <td>@if (e.IsUpcoming) { <span class="status-badge status-upcoming"><span class="dot"></span>Upcoming</span> } else { <span class="status-badge status-completed"><span class="dot"></span>Completed</span> }</td>
+                                    <td class="text-center fw-bold fs-5">@e.EnrolmentCount</td>
+                                    <td class="text-center">@e.CategoryCount</td>
+                                    <td class="text-center">@e.ResultCount</td>
+                                    <td class="text-end text-nowrap">
+                                        <a class="btn btn-sm btn-outline-primary" asp-controller="ManageEnrolments" asp-action="Index" asp-route-eventId="@e.EventId">Enrolments</a>
+                                        <a class="btn btn-sm btn-outline-secondary" asp-controller="ManageEvents" asp-action="Edit" asp-route-id="@e.EventId">Edit</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>

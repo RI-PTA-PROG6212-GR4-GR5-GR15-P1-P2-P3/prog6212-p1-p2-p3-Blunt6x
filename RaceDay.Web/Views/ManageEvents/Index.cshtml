@@ -1,0 +1,52 @@
+@model List<EventDto>
+@{ ViewData["Title"] = "Manage events"; }
+<div class="container pb-4">
+    <div class="page-header">
+        <div><h1>Events</h1><p class="sub">Create, edit and remove the events you organise.</p></div>
+        <a class="btn btn-primary" asp-action="Create">+ New event</a>
+    </div>
+
+    @if (ViewData["LoadError"] is string err)
+    {
+        <div class="alert alert-danger rd-alert">@err</div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="rd-card empty-state"><div class="icon">🏁</div><h2 class="h4 mt-2">No events yet</h2><p>Create your first event to get started.</p><a class="btn btn-primary" asp-action="Create">Create event</a></div>
+    }
+    else
+    {
+        <div class="rd-card">
+            <div class="table-responsive">
+                <table class="table rd-table">
+                    <thead><tr><th>Event</th><th>Date</th><th>Type</th><th>Distance</th><th class="text-center">Enrolled</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody>
+                        @foreach (var e in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="thumb"><partial name="_Banner" model="e" /></span>
+                                        <span><a asp-controller="Events" asp-action="Details" asp-route-id="@e.EventId" class="fw-semibold">@e.Name</a><br /><small class="text-muted">@e.Location</small></span>
+                                    </div>
+                                </td>
+                                <td>@UiFormat.DateAndTime(e.Date)</td>
+                                <td>@UiFormat.EventTypeIcon(e.EventType) @e.EventType</td>
+                                <td>@UiFormat.Distance(e.Distance)</td>
+                                <td class="text-center">@e.EnrolmentCount</td>
+                                <td class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="ManageCategories" asp-action="Index" asp-route-eventId="@e.EventId">Categories</a>
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="ManageResults" asp-action="Index" asp-route-eventId="@e.EventId">Results</a>
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@e.EventId">Edit</a>
+                                    <form asp-action="Delete" asp-route-id="@e.EventId" method="post" class="d-inline" data-confirm="Delete “@e.Name”? This can't be undone.">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" @(e.EnrolmentCount > 0 ? "disabled title=Events with enrolments cannot be deleted" : "")>Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
