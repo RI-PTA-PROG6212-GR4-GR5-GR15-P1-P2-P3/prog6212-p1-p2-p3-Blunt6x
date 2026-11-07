@@ -9,6 +9,6 @@ public class Enrolment {
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
     public DateTime EnrolmentDate { get; set; } = DateTime.UtcNow;
-    [Required, MaxLength(20)] public string Status { get; set; } = "Registered";
+    [Required, MaxLength(20)] public string Status { get; set; } = "Confirmed";
     public RaceResult? Result { get; set; }
 }

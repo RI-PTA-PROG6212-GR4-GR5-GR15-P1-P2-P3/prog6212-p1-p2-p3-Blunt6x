@@ -10,6 +10,7 @@ public class RaceEvent {
     [Required, MaxLength(180)] public string Location { get; set; } = "";
     [Range(0.1, 1000)] public decimal Distance { get; set; }
     [Required, MaxLength(10)] public string EventType { get; set; } = "Run";
+    [MaxLength(500)] public string? BannerUrl { get; set; }
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<Enrolment> Enrolments { get; set; } = new List<Enrolment>();
 }

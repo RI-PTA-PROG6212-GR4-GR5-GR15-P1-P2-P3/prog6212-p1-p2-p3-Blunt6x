@@ -8,6 +8,7 @@ public class UserAccount {
     [Required, EmailAddress, MaxLength(180)] public string Email { get; set; } = "";
     [Required] public string PasswordHash { get; set; } = "";
     [Required, MaxLength(20)] public string Role { get; set; } = Roles.Participant;
+    [MaxLength(500)] public string? ProfilePictureUrl { get; set; }
     public ICollection<RaceEvent> OrganisedEvents { get; set; } = new List<RaceEvent>();
     public ICollection<Enrolment> Enrolments { get; set; } = new List<Enrolment>();
 }
