@@ -15,6 +15,8 @@ public class ResultsController(RaceDayDbContext db) : ControllerBase {
         if (request.FinishTime < TimeSpan.Zero || request.Position < 1) return BadRequest(new { message = "Finish time must be non-negative and position must be at least 1." });
         var enrolment = await db.Enrolments.Include(x => x.Event).SingleOrDefaultAsync(x => x.EnrolmentId == request.EnrolmentId);
         if (enrolment is null) return NotFound(new { message = "Enrolment not found." }); if (enrolment.Event!.OrganiserId != CurrentUserId) return Forbid();
+        if (!RaceDay.Api.Services.RaceDayRules.EventHasConcluded(enrolment.Event.Date, DateTime.UtcNow)) return BadRequest(new { message = "Results can only be captured once the event has taken place." });
+        if (enrolment.Status == "Cancelled") return BadRequest(new { message = "A result cannot be recorded for a cancelled enrolment." });
         if (await db.Results.AnyAsync(x => x.EnrolmentId == request.EnrolmentId)) return Conflict(new { message = "A result already exists for this enrolment. Use PUT to update it." });
         var result = new RaceResult { EnrolmentId = request.EnrolmentId, FinishTime = request.FinishTime, Position = request.Position, RecordedAt = DateTime.UtcNow };
         db.Results.Add(result); await db.SaveChangesAsync(); return Created($"/api/results/my", new { result.ResultId, result.EnrolmentId, result.FinishTime, result.Position, result.RecordedAt });
@@ -28,11 +30,20 @@ public class ResultsController(RaceDayDbContext db) : ControllerBase {
     }
     /// <summary>Participants can view their own results only.</summary>
     [HttpGet("results/my"), Authorize(Roles = Roles.Participant)]
-    public async Task<IActionResult> Mine() => Ok(await db.Results.AsNoTracking().Include(x => x.Enrolment!).ThenInclude(x => x.Event).Include(x => x.Enrolment!).ThenInclude(x => x.Category).Where(x => x.Enrolment!.ParticipantId == CurrentUserId).OrderBy(x => x.Position).Select(x => new { x.ResultId, x.FinishTime, x.Position, x.RecordedAt, Event = new { x.Enrolment!.Event!.EventId, x.Enrolment.Event.Name, x.Enrolment.Event.Date }, Category = new { x.Enrolment!.Category!.CategoryId, x.Enrolment.Category.Name } }).ToListAsync());
+    public async Task<IActionResult> Mine() => Ok(await db.Results.AsNoTracking()
+        .Where(x => x.Enrolment!.ParticipantId == CurrentUserId)
+        .OrderByDescending(x => x.Enrolment!.Event!.Date)
+        .Select(x => new {
+            x.ResultId, x.FinishTime, x.Position, x.RecordedAt,
+            TotalFinishers = db.Results.Count(r => r.Enrolment!.EventId == x.Enrolment!.EventId),
+            Event = new { x.Enrolment!.Event!.EventId, x.Enrolment.Event.Name, x.Enrolment.Event.Date, x.Enrolment.Event.Location, x.Enrolment.Event.Distance },
+            Category = new { x.Enrolment.Category!.CategoryId, x.Enrolment.Category.Name }
+        }).ToListAsync());
+
     /// <summary>Organiser views results for an event they manage.</summary>
     [HttpGet("events/{eventId:int}/results"), Authorize(Roles = Roles.Organiser)]
     public async Task<IActionResult> ForEvent(int eventId) {
         if (!await db.Events.AnyAsync(x => x.EventId == eventId && x.OrganiserId == CurrentUserId)) return NotFound(new { message = "Event not found or not managed by this organiser." });
-        return Ok(await db.Results.AsNoTracking().Include(x => x.Enrolment!).ThenInclude(x => x.Participant).Include(x => x.Enrolment!).ThenInclude(x => x.Category).Where(x => x.Enrolment!.EventId == eventId).OrderBy(x => x.Position).Select(x => new { x.ResultId, x.FinishTime, x.Position, Participant = new { x.Enrolment!.Participant!.UserId, x.Enrolment.Participant.FirstName, x.Enrolment.Participant.LastName }, Category = new { x.Enrolment!.Category!.CategoryId, x.Enrolment.Category.Name } }).ToListAsync());
+        return Ok(await db.Results.AsNoTracking().Include(x => x.Enrolment!).ThenInclude(x => x.Participant).Include(x => x.Enrolment!).ThenInclude(x => x.Category).Where(x => x.Enrolment!.EventId == eventId).OrderBy(x => x.Position).Select(x => new { x.ResultId, x.EnrolmentId, x.FinishTime, x.Position, Participant = new { x.Enrolment!.Participant!.UserId, x.Enrolment.Participant.FirstName, x.Enrolment.Participant.LastName }, Category = new { x.Enrolment!.Category!.CategoryId, x.Enrolment.Category.Name } }).ToListAsync());
     }
 }
