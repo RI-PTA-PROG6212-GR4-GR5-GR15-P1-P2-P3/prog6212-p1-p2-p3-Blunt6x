@@ -1,5 +1,5 @@
 
-name: RaceDay Part 2 CI
+name: RaceDay CI (API + MVC + Docker)
 
 on:
   push:
@@ -73,5 +73,11 @@ jobs:
       - name: Run Automated Tests
         run: dotnet test "$SOLUTION_FILE" --configuration Release --no-build --logger "console;verbosity=normal"
 
-      - name: Part 2 CI Complete
-        run: echo "RaceDay documentation checks, build, and automated tests passed."
+      - name: Build MVC Project
+        run: dotnet build RaceDay.Web/RaceDay.Web.csproj --configuration Release --no-restore
+
+      - name: Build MVC Docker Image
+        run: docker build -t raceday-web ./RaceDay.Web
+
+      - name: CI Complete
+        run: echo "RaceDay documentation checks, API and MVC builds, tests and Docker image build passed."

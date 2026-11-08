@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using RaceDay.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
