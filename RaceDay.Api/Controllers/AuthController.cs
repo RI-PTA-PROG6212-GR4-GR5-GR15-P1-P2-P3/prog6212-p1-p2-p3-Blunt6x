@@ -11,6 +11,8 @@ public class AuthController(RaceDayDbContext db, IPasswordHasher<UserAccount> ha
     /// <summary>Register an Organiser or Participant account. Passwords are hashed before storage.</summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request) {
+        if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.Role))
+            return BadRequest(new { message = "First name, last name, email, password and role are required." });
         var role = request.Role.Trim();
         if (!RaceDayRules.IsValidRole(role)) return BadRequest(new { message = "Role must be Organiser or Participant." });
         var email = request.Email.Trim().ToLowerInvariant();
@@ -23,6 +25,7 @@ public class AuthController(RaceDayDbContext db, IPasswordHasher<UserAccount> ha
     /// <summary>Log in and receive a bearer token for subsequent requests.</summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request) {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password)) return Unauthorized(new { message = "Invalid email or password." });
         var user = await db.Users.SingleOrDefaultAsync(x => x.Email == request.Email.Trim().ToLowerInvariant());
         if (user is null || hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed) return Unauthorized(new { message = "Invalid email or password." });
         return Ok(new { token = jwt.CreateToken(user), userId = user.UserId, user.FirstName, user.LastName, user.Email, user.Role, tokenType = "Bearer" });

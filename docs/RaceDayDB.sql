@@ -2,7 +2,7 @@
    RaceDay System - Database Schema & Seed Data
    Target: SQL Server (SSMS)
    Run on a clean database. Order of creation follows FK dependency:
-   Users -> EventTypes -> Events -> Categories -> Enrolments -> Results
+   Users -> Events -> Categories -> Enrolments -> Results
    ============================================================ */
 
 -- ------------------------------------------------------------
@@ -13,7 +13,7 @@ IF OBJECT_ID('dbo.Results', 'U') IS NOT NULL DROP TABLE dbo.Results;
 IF OBJECT_ID('dbo.Enrolments', 'U') IS NOT NULL DROP TABLE dbo.Enrolments;
 IF OBJECT_ID('dbo.Categories', 'U') IS NOT NULL DROP TABLE dbo.Categories;
 IF OBJECT_ID('dbo.Events', 'U') IS NOT NULL DROP TABLE dbo.Events;
-IF OBJECT_ID('dbo.EventTypes', 'U') IS NOT NULL DROP TABLE dbo.EventTypes;
+IF OBJECT_ID('dbo.EventTypes', 'U') IS NOT NULL DROP TABLE dbo.EventTypes; -- legacy lookup table
 IF OBJECT_ID('dbo.Users', 'U') IS NOT NULL DROP TABLE dbo.Users;
 GO
 
@@ -27,18 +27,9 @@ CREATE TABLE dbo.Users (
     LastName    NVARCHAR(50)  NOT NULL,
     Email       NVARCHAR(100) NOT NULL UNIQUE,
     Password    NVARCHAR(255) NOT NULL,   -- store a hash, never plain text
+    ProfilePictureUrl NVARCHAR(500) NULL,
     Role        NVARCHAR(20)  NOT NULL DEFAULT 'Participant'
                 CONSTRAINT CK_Users_Role CHECK (Role IN ('Organiser', 'Participant'))
-);
-GO
-
--- ------------------------------------------------------------
--- EVENT TYPES
--- Lookup table, e.g. Marathon, Fun Run, Trail Run
--- ------------------------------------------------------------
-CREATE TABLE dbo.EventTypes (
-    EventTypeID INT IDENTITY(1,1) PRIMARY KEY,
-    TypeName    NVARCHAR(50) NOT NULL UNIQUE
 );
 GO
 
@@ -49,14 +40,14 @@ GO
 CREATE TABLE dbo.Events (
     EventID      INT IDENTITY(1,1) PRIMARY KEY,
     OrganiserID  INT NOT NULL,
-    EventTypeID  INT NOT NULL,
+    EventType    NVARCHAR(10) NOT NULL CONSTRAINT CK_Events_EventType CHECK (EventType IN ('Run','Walk','Cycle')),
     EventName    NVARCHAR(100) NOT NULL,
     Description  NVARCHAR(MAX) NULL,
     EventDate    DATE NOT NULL,
     Location     NVARCHAR(150) NOT NULL,
-    Distance     DECIMAL(6,2) NULL,   -- kilometres
-    CONSTRAINT FK_Events_Organiser FOREIGN KEY (OrganiserID) REFERENCES dbo.Users(UserID),
-    CONSTRAINT FK_Events_EventType FOREIGN KEY (EventTypeID) REFERENCES dbo.EventTypes(EventTypeID)
+    Distance     DECIMAL(6,2) NOT NULL,   -- kilometres
+    BannerUrl    NVARCHAR(500) NULL,
+    CONSTRAINT FK_Events_Organiser FOREIGN KEY (OrganiserID) REFERENCES dbo.Users(UserID)
     -- Note: DB does not enforce that OrganiserID belongs to a user with Role = 'Organiser';
     -- that check is done at the application layer.
 );
@@ -70,6 +61,9 @@ CREATE TABLE dbo.Categories (
     CategoryID   INT IDENTITY(1,1) PRIMARY KEY,
     EventID      INT NOT NULL,
     CategoryName NVARCHAR(50) NOT NULL,
+    Description NVARCHAR(250) NULL,
+    MinimumAge INT NULL,
+    MaximumAge INT NULL,
     CONSTRAINT FK_Categories_Event FOREIGN KEY (EventID) REFERENCES dbo.Events(EventID)
 );
 GO
@@ -101,8 +95,9 @@ GO
 CREATE TABLE dbo.Results (
     ResultID    INT IDENTITY(1,1) PRIMARY KEY,
     EnrolmentID INT NOT NULL UNIQUE,   -- UNIQUE enforces the 1 : 0..1 cardinality
-    FinishTime  TIME(0) NULL,
-    Position    INT NULL,
+    FinishTime  TIME(0) NOT NULL,
+    Position    INT NOT NULL,
+    RecordedAt  DATETIME2 NOT NULL CONSTRAINT DF_Results_RecordedAt DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_Results_Enrolment FOREIGN KEY (EnrolmentID) REFERENCES dbo.Enrolments(EnrolmentID)
 );
 GO
@@ -120,18 +115,11 @@ INSERT INTO dbo.Users (FirstName, LastName, Email, Password, Role) VALUES
 ('Noah',  'van Wyk',  'noah.vanwyk@example.com',      'HASHED_PWD_5', 'Participant');
 GO
 
--- Event Types
-INSERT INTO dbo.EventTypes (TypeName) VALUES
-('Marathon'),
-('Fun Run'),
-('Trail Run');
-GO
-
 -- Events: 3 events, one per organiser/type mix
-INSERT INTO dbo.Events (OrganiserID, EventTypeID, EventName, Description, EventDate, Location, Distance) VALUES
-(1, 1, 'Pretoria City Marathon',   'Annual road marathon through the city centre.', '2026-11-08', 'Pretoria, Gauteng', 42.20),
-(1, 2, 'Family Fun Run',           'Casual 5km run for all ages.',                  '2026-10-04', 'Centurion, Gauteng', 5.00),
-(2, 3, 'Magaliesberg Trail Run',   'Off-road trail run through the Magaliesberg.',  '2026-09-27', 'Magaliesberg, North West', 21.10);
+INSERT INTO dbo.Events (OrganiserID, EventType, EventName, Description, EventDate, Location, Distance) VALUES
+(1, 'Run', 'Pretoria City Marathon',   'Annual road marathon through the city centre.', '2026-11-08', 'Pretoria, Gauteng', 42.20),
+(1, 'Run', 'Family Fun Run',           'Casual 5km run for all ages.',                  '2026-10-04', 'Centurion, Gauteng', 5.00),
+(2, 'Run', 'Magaliesberg Trail Run',  'Off-road trail run through the Magaliesberg.',  '2026-09-27', 'Magaliesberg, North West', 21.10);
 GO
 
 -- Categories: at least one per event

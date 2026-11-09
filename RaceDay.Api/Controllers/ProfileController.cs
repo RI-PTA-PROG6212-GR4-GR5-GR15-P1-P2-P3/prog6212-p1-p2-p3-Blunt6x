@@ -17,6 +17,7 @@ public class ProfileController(RaceDayDbContext db) : ControllerBase {
     [HttpPut]
     public async Task<IActionResult> Update(UpdateProfileRequest request) {
         var u = await db.Users.FindAsync(CurrentUserId); if (u is null) return NotFound();
+        if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.Email)) return BadRequest(new { message = "First name, last name and email are required." });
         var email = request.Email.Trim().ToLowerInvariant();
         if (await db.Users.AnyAsync(x => x.Email == email && x.UserId != u.UserId)) return Conflict(new { message = "Email is already in use." });
         u.FirstName = request.FirstName.Trim(); u.LastName = request.LastName.Trim(); u.Email = email;

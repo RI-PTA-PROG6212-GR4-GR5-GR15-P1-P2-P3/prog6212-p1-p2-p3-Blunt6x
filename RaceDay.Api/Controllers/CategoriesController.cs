@@ -20,6 +20,7 @@ public class CategoriesController(RaceDayDbContext db) : ControllerBase {
     [HttpPost("events/{eventId:int}/categories"), Authorize(Roles = Roles.Organiser)]
     public async Task<IActionResult> Create(int eventId, CategoryRequest request) {
         if (!await OwnsEvent(eventId)) return NotFound(new { message = "Event not found or not managed by this organiser." });
+        if (string.IsNullOrWhiteSpace(request.Name)) return BadRequest(new { message = "Category name is required." });
         if (!RaceDay.Api.Services.RaceDayRules.IsValidAgeRange(request.MinimumAge, request.MaximumAge)) return BadRequest(new { message = "Age range is invalid." });
         var c = new Category { EventId = eventId, Name = request.Name.Trim(), Description = request.Description, MinimumAge = request.MinimumAge, MaximumAge = request.MaximumAge };
         db.Categories.Add(c); await db.SaveChangesAsync(); return Created($"/api/categories/{c.CategoryId}", new { c.CategoryId, c.EventId, c.Name, c.Description, c.MinimumAge, c.MaximumAge });
@@ -28,6 +29,7 @@ public class CategoriesController(RaceDayDbContext db) : ControllerBase {
     [HttpPut("categories/{id:int}"), Authorize(Roles = Roles.Organiser)]
     public async Task<IActionResult> Update(int id, CategoryRequest request) {
         var c = await db.Categories.Include(x => x.Event).SingleOrDefaultAsync(x => x.CategoryId == id); if (c is null) return NotFound(); if (c.Event!.OrganiserId != CurrentUserId) return Forbid();
+        if (string.IsNullOrWhiteSpace(request.Name)) return BadRequest(new { message = "Category name is required." });
         if (!RaceDay.Api.Services.RaceDayRules.IsValidAgeRange(request.MinimumAge, request.MaximumAge)) return BadRequest(new { message = "Age range is invalid." });
         c.Name = request.Name.Trim(); c.Description = request.Description; c.MinimumAge = request.MinimumAge; c.MaximumAge = request.MaximumAge; await db.SaveChangesAsync();
         return Ok(new { c.CategoryId, c.EventId, c.Name, c.Description, c.MinimumAge, c.MaximumAge });

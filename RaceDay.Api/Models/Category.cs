@@ -4,7 +4,7 @@ public class Category {
     public int CategoryId { get; set; }
     public int EventId { get; set; }
     public RaceEvent? Event { get; set; }
-    [Required, MaxLength(80)] public string Name { get; set; } = "";
+    [Required, MaxLength(50)] public string Name { get; set; } = "";
     [MaxLength(250)] public string? Description { get; set; }
     public int? MinimumAge { get; set; }
     public int? MaximumAge { get; set; }

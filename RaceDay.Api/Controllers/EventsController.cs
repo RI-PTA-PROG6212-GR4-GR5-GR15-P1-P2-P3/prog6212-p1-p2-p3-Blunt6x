@@ -20,6 +20,7 @@ public class EventsController(RaceDayDbContext db) : ControllerBase {
     /// <summary>Create an event. Organiser only.</summary>
     [HttpPost, Authorize(Roles = Roles.Organiser)]
     public async Task<IActionResult> Create(EventRequest request) {
+        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Location)) return BadRequest(new { message = "Event name and location are required." });
         if (!ValidType(request.EventType)) return BadRequest(new { message = "EventType must be Run, Walk, or Cycle." });
         if (request.Distance <= 0) return BadRequest(new { message = "Distance must be greater than zero." });
         var e = new RaceEvent { OrganiserId = CurrentUserId, Name = request.Name.Trim(), Description = request.Description ?? "", Date = request.Date, Location = request.Location.Trim(), Distance = request.Distance, EventType = request.EventType.Trim().Substring(0,1).ToUpperInvariant() + request.EventType.Trim()[1..].ToLowerInvariant() };
@@ -29,6 +30,7 @@ public class EventsController(RaceDayDbContext db) : ControllerBase {
     [HttpPut("{id:int}"), Authorize(Roles = Roles.Organiser)]
     public async Task<IActionResult> Update(int id, EventRequest request) {
         var e = await db.Events.FindAsync(id); if (e is null) return NotFound(); if (e.OrganiserId != CurrentUserId) return Forbid();
+        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Location)) return BadRequest(new { message = "Event name and location are required." });
         if (!ValidType(request.EventType) || request.Distance <= 0) return BadRequest(new { message = "Use event type Run, Walk, or Cycle and a positive distance." });
         e.Name = request.Name.Trim(); e.Description = request.Description ?? ""; e.Date = request.Date; e.Location = request.Location.Trim(); e.Distance = request.Distance; e.EventType = request.EventType.Trim().Substring(0,1).ToUpperInvariant() + request.EventType.Trim()[1..].ToLowerInvariant();
         await db.SaveChangesAsync(); return Ok(View(e));
